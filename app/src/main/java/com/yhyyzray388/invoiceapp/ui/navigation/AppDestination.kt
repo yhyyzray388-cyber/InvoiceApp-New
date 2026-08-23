@@ -6,4 +6,7 @@ sealed class AppDestination(val route: String) {
     data object InvoiceDetails : AppDestination("invoices/{invoiceId}") {
         fun createRoute(invoiceId: Long) = "invoices/$invoiceId"
     }
+    data object EditInvoice : AppDestination("invoices/{invoiceId}/edit") {
+        fun createRoute(invoiceId: Long) = "invoices/$invoiceId/edit"
+    }
 }
