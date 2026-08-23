@@ -13,6 +13,8 @@ import com.yhyyzray388.invoiceapp.domain.usecase.CalculateInvoiceTotalsUseCase
 import com.yhyyzray388.invoiceapp.domain.usecase.CreateInvoiceUseCase
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceViewModel
+import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsScreen
+import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsViewModel
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceViewModel
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoicesScreen
 
@@ -50,9 +52,21 @@ fun AppNavHost(application: InvoiceApplication) {
         composable(
             route = AppDestination.InvoiceDetails.route,
             arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })
-        ) {
-            // Details screen is implemented in the next step.
-            androidx.compose.material3.Text("تفاصيل الفاتورة")
+        ) { entry ->
+            val invoiceId = entry.arguments?.getLong("invoiceId") ?: return@composable
+            val detailsViewModel: InvoiceDetailsViewModel = viewModel(
+                factory = remember(invoiceId) {
+                    InvoiceDetailsViewModel.Factory(
+                        container.invoiceRepository,
+                        container.invoiceItemRepository,
+                        invoiceId
+                    )
+                }
+            )
+            InvoiceDetailsScreen(
+                viewModel = detailsViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
