@@ -12,6 +12,7 @@ import com.yhyyzray388.invoiceapp.InvoiceApplication
 import com.yhyyzray388.invoiceapp.domain.usecase.CalculateInvoiceTotalsUseCase
 import com.yhyyzray388.invoiceapp.domain.usecase.CreateInvoiceUseCase
 import com.yhyyzray388.invoiceapp.domain.usecase.DeleteInvoiceUseCase
+import com.yhyyzray388.invoiceapp.domain.usecase.GetInvoicesUseCase
 import com.yhyyzray388.invoiceapp.domain.usecase.UpdateInvoiceUseCase
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceViewModel
@@ -19,29 +20,27 @@ import com.yhyyzray388.invoiceapp.ui.invoice.EditInvoiceScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.EditInvoiceViewModel
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsViewModel
-import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceViewModel
 import com.yhyyzray388.invoiceapp.ui.invoices.InvoicesScreen
 import com.yhyyzray388.invoiceapp.ui.invoices.InvoicesViewModel
-import com.yhyyzray388.invoiceapp.domain.usecase.GetInvoicesUseCase
 
 @Composable
 fun AppNavHost(application: InvoiceApplication) {
     val navController = rememberNavController()
     val container = application.appContainer
-    val invoiceViewModel: InvoicesViewModel = viewModel(
-        factory = remember { InvoicesViewModel.Factory(GetInvoicesUseCase(container.invoiceRepository)) }
-    )
 
     NavHost(navController = navController, startDestination = AppDestination.Invoices.route) {
         composable(AppDestination.Invoices.route) {
+            val vm: InvoicesViewModel = viewModel(
+                factory = remember { InvoicesViewModel.Factory(GetInvoicesUseCase(container.invoiceRepository)) }
+            )
             InvoicesScreen(
-                viewModel = invoiceViewModel,
+                viewModel = vm,
                 onCreateInvoice = { navController.navigate(AppDestination.CreateInvoice.route) },
                 onInvoiceClick = { id -> navController.navigate(AppDestination.InvoiceDetails.createRoute(id)) }
             )
         }
         composable(AppDestination.CreateInvoice.route) {
-            val createViewModel: CreateInvoiceViewModel = viewModel(
+            val vm: CreateInvoiceViewModel = viewModel(
                 factory = remember {
                     CreateInvoiceViewModel.Factory(
                         CreateInvoiceUseCase(container.invoiceRepository, container.invoiceItemRepository),
@@ -49,40 +48,40 @@ fun AppNavHost(application: InvoiceApplication) {
                     )
                 }
             )
-            CreateInvoiceScreen(createViewModel, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
+            CreateInvoiceScreen(vm, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
         }
         composable(AppDestination.InvoiceDetails.route, arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })) { entry ->
-            val invoiceId = entry.arguments?.getLong("invoiceId") ?: return@composable
-            val detailsViewModel: InvoiceDetailsViewModel = viewModel(
-                factory = remember(invoiceId) {
+            val id = entry.arguments?.getLong("invoiceId") ?: return@composable
+            val vm: InvoiceDetailsViewModel = viewModel(
+                factory = remember(id) {
                     InvoiceDetailsViewModel.Factory(
                         container.invoiceRepository,
                         container.invoiceItemRepository,
                         DeleteInvoiceUseCase(container.invoiceRepository),
-                        invoiceId
+                        id
                     )
                 }
             )
             InvoiceDetailsScreen(
-                detailsViewModel,
+                viewModel = vm,
                 onBack = { navController.popBackStack() },
-                onEdit = { id -> navController.navigate("invoices/$id/edit") }
+                onEdit = { invoiceId -> navController.navigate(AppDestination.EditInvoice.createRoute(invoiceId)) }
             )
         }
-        composable("invoices/{invoiceId}/edit", arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })) { entry ->
-            val invoiceId = entry.arguments?.getLong("invoiceId") ?: return@composable
-            val editViewModel: EditInvoiceViewModel = viewModel(
-                factory = remember(invoiceId) {
+        composable(AppDestination.EditInvoice.route, arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })) { entry ->
+            val id = entry.arguments?.getLong("invoiceId") ?: return@composable
+            val vm: EditInvoiceViewModel = viewModel(
+                factory = remember(id) {
                     EditInvoiceViewModel.Factory(
                         container.invoiceRepository,
                         container.invoiceItemRepository,
                         UpdateInvoiceUseCase(container.invoiceRepository, container.invoiceItemRepository),
                         CalculateInvoiceTotalsUseCase(),
-                        invoiceId
+                        id
                     )
                 }
             )
-            EditInvoiceScreen(editViewModel, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
+            EditInvoiceScreen(vm, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
         }
     }
 }
