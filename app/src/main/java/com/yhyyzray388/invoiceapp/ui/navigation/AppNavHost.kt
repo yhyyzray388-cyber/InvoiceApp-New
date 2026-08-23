@@ -11,19 +11,25 @@ import androidx.navigation.navArgument
 import com.yhyyzray388.invoiceapp.InvoiceApplication
 import com.yhyyzray388.invoiceapp.domain.usecase.CalculateInvoiceTotalsUseCase
 import com.yhyyzray388.invoiceapp.domain.usecase.CreateInvoiceUseCase
+import com.yhyyzray388.invoiceapp.domain.usecase.DeleteInvoiceUseCase
+import com.yhyyzray388.invoiceapp.domain.usecase.UpdateInvoiceUseCase
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceViewModel
+import com.yhyyzray388.invoiceapp.ui.invoice.EditInvoiceScreen
+import com.yhyyzray388.invoiceapp.ui.invoice.EditInvoiceViewModel
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceDetailsViewModel
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceViewModel
-import com.yhyyzray388.invoiceapp.ui.invoice.InvoicesScreen
+import com.yhyyzray388.invoiceapp.ui.invoices.InvoicesScreen
+import com.yhyyzray388.invoiceapp.ui.invoices.InvoicesViewModel
+import com.yhyyzray388.invoiceapp.domain.usecase.GetInvoicesUseCase
 
 @Composable
 fun AppNavHost(application: InvoiceApplication) {
     val navController = rememberNavController()
     val container = application.appContainer
-    val invoiceViewModel: InvoiceViewModel = viewModel(
-        factory = remember { InvoiceViewModel.Factory(container.invoiceRepository) }
+    val invoiceViewModel: InvoicesViewModel = viewModel(
+        factory = remember { InvoicesViewModel.Factory(GetInvoicesUseCase(container.invoiceRepository)) }
     )
 
     NavHost(navController = navController, startDestination = AppDestination.Invoices.route) {
@@ -43,30 +49,40 @@ fun AppNavHost(application: InvoiceApplication) {
                     )
                 }
             )
-            CreateInvoiceScreen(
-                viewModel = createViewModel,
-                onSaved = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
-            )
+            CreateInvoiceScreen(createViewModel, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
         }
-        composable(
-            route = AppDestination.InvoiceDetails.route,
-            arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })
-        ) { entry ->
+        composable(AppDestination.InvoiceDetails.route, arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })) { entry ->
             val invoiceId = entry.arguments?.getLong("invoiceId") ?: return@composable
             val detailsViewModel: InvoiceDetailsViewModel = viewModel(
                 factory = remember(invoiceId) {
                     InvoiceDetailsViewModel.Factory(
                         container.invoiceRepository,
                         container.invoiceItemRepository,
+                        DeleteInvoiceUseCase(container.invoiceRepository),
                         invoiceId
                     )
                 }
             )
             InvoiceDetailsScreen(
-                viewModel = detailsViewModel,
-                onBack = { navController.popBackStack() }
+                detailsViewModel,
+                onBack = { navController.popBackStack() },
+                onEdit = { id -> navController.navigate("invoices/$id/edit") }
             )
+        }
+        composable("invoices/{invoiceId}/edit", arguments = listOf(navArgument("invoiceId") { type = NavType.LongType })) { entry ->
+            val invoiceId = entry.arguments?.getLong("invoiceId") ?: return@composable
+            val editViewModel: EditInvoiceViewModel = viewModel(
+                factory = remember(invoiceId) {
+                    EditInvoiceViewModel.Factory(
+                        container.invoiceRepository,
+                        container.invoiceItemRepository,
+                        UpdateInvoiceUseCase(container.invoiceRepository, container.invoiceItemRepository),
+                        CalculateInvoiceTotalsUseCase(),
+                        invoiceId
+                    )
+                }
+            )
+            EditInvoiceScreen(editViewModel, onSaved = { navController.popBackStack() }, onBack = { navController.popBackStack() })
         }
     }
 }
