@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceEntity
-import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceItemEntity
 import com.yhyyzray388.invoiceapp.data.repository.InvoiceRepository
 import kotlinx.coroutines.launch
 
@@ -50,21 +48,24 @@ fun EditInvoiceScreen(
         }
     }
 
-    if (invoice == null) {
+    val current = invoice
+    if (current == null) {
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    val total = items.sumOf { it.lineTotal }
+    val subtotal = items.sumOf { it.lineTotal }
+    val tax = current.tax
+    val total = subtotal + tax
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("تعديل الفاتورة", style = MaterialTheme.typography.headlineSmall)
-        Text(invoice!!.invoiceNumber, style = MaterialTheme.typography.titleMedium)
+        Text(current.invoiceNumber, style = MaterialTheme.typography.titleMedium)
 
         OutlinedTextField(
             value = customerName,
@@ -75,15 +76,15 @@ fun EditInvoiceScreen(
         )
 
         LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            itemsIndexed(items) { index, item ->
+            itemsIndexed(items, key = { _, item -> item.id }) { _, item ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(item.description)
                         Text("${item.quantity} × ${item.unitPrice} = ${item.lineTotal}")
                     }
-                    Button(onClick = {
-                        scope.launch { repository.delete(item) }
-                    }) { Text("حذف") }
+                    Button(onClick = { scope.launch { repository.deleteItem(item) } }) {
+                        Text("حذف")
+                    }
                 }
             }
         }
@@ -100,11 +101,15 @@ fun EditInvoiceScreen(
         Button(
             enabled = !saving && customerName.isNotBlank(),
             onClick = {
-                val current = invoice ?: return@Button
                 saving = true
                 scope.launch {
                     repository.updateInvoiceWithItems(
-                        current.copy(customerName = customerName.trim(), total = total, notes = notes),
+                        current.copy(
+                            customerName = customerName.trim(),
+                            subtotal = subtotal,
+                            total = total,
+                            notes = notes
+                        ),
                         items
                     )
                     saving = false
