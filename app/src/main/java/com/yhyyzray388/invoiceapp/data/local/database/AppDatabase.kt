@@ -28,7 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
                         description TEXT NOT NULL,
                         quantity REAL NOT NULL,
                         unitPrice REAL NOT NULL,
-                        discount REAL NOT NULL DEFAULT 0.0,
+                        discount REAL NOT NULL,
                         FOREIGN KEY(invoiceId) REFERENCES invoices(id) ON DELETE CASCADE
                     )"""
                 )
