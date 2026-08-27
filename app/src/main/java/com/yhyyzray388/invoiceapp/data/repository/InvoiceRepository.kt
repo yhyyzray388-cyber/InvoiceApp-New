@@ -22,6 +22,8 @@ class InvoiceRepository(
 
     suspend fun delete(invoice: InvoiceEntity) = invoiceDao.delete(invoice)
 
+    suspend fun deleteItem(item: InvoiceItemEntity) = itemDao.delete(item)
+
     suspend fun deleteAllInvoices() = invoiceDao.deleteAllInvoices()
 
     suspend fun saveInvoiceWithItems(
@@ -29,7 +31,7 @@ class InvoiceRepository(
         items: List<InvoiceItemEntity>
     ): Long = database.withTransaction {
         val invoiceId = invoiceDao.insert(invoice)
-        items.forEach { itemDao.insert(it.copy(invoiceId = invoiceId)) }
+        items.forEach { itemDao.insert(it.copy(id = 0, invoiceId = invoiceId)) }
         invoiceId
     }
 
