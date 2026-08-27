@@ -2,18 +2,22 @@ package com.yhyyzray388.invoiceapp.data.local
 
 import android.content.Context
 import androidx.room.Room
+import com.yhyyzray388.invoiceapp.data.local.database.AppDatabase
 
 object AppDatabaseProvider {
     @Volatile
-    private var INSTANCE: AppDatabase? = null
+    private var instance: AppDatabase? = null
 
     fun get(context: Context): AppDatabase {
-        return INSTANCE ?: synchronized(this) {
-            INSTANCE ?: Room.databaseBuilder(
+        return instance ?: synchronized(this) {
+            instance ?: Room.databaseBuilder(
                 context.applicationContext,
                 AppDatabase::class.java,
-                "invoice_database"
-            ).build().also { INSTANCE = it }
+                "invoice_app.db"
+            )
+                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .build()
+                .also { instance = it }
         }
     }
 }
