@@ -32,13 +32,13 @@ class InvoiceViewModel(
             _saving.value = true
             runCatching {
                 val invoice = InvoiceEntity(
-                    invoiceNumber = InvoiceNumberGenerator.generate(),
+                    invoiceNumber = draft.invoiceNumber.ifBlank { InvoiceNumberGenerator.generate() },
                     customerName = draft.customerName.trim(),
                     issueDate = draft.issueDate,
                     subtotal = draft.subtotal,
                     tax = draft.tax,
                     total = draft.total,
-                    notes = draft.notes
+                    notes = draft.notes.trim()
                 )
                 val items = draft.items.map {
                     InvoiceItemEntity(
@@ -46,7 +46,7 @@ class InvoiceViewModel(
                         description = it.description.trim(),
                         quantity = it.quantity,
                         unitPrice = it.unitPrice,
-                        discount = 0.0
+                        total = it.total
                     )
                 }
                 repository.saveInvoiceWithItems(invoice, items)
