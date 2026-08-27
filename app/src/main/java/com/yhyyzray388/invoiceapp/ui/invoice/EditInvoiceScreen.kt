@@ -56,7 +56,7 @@ fun EditInvoiceScreen(
         return
     }
 
-    val subtotal = items.sumOf { it.lineTotal }
+    val subtotal = items.sumOf { it.total }
     val tax = current.tax
     val total = subtotal + tax
 
@@ -80,7 +80,7 @@ fun EditInvoiceScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(item.description)
-                        Text("${item.quantity} × ${item.unitPrice} = ${item.lineTotal}")
+                        Text("${item.quantity} × ${item.unitPrice} = ${item.total}")
                     }
                     Button(onClick = { scope.launch { repository.deleteItem(item) } }) {
                         Text("حذف")
