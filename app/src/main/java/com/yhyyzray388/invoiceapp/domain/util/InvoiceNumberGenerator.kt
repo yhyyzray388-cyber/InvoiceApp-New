@@ -6,7 +6,7 @@ import java.util.Locale
 
 object InvoiceNumberGenerator {
     fun generate(): String {
-        val format = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault())
+        val format = SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US)
         return "INV-${format.format(Date())}"
     }
 }
