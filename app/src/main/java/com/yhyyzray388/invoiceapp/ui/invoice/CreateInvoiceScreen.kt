@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,15 +19,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceDraft
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceItemDraft
@@ -42,7 +44,15 @@ fun CreateInvoiceScreen(
     var price by remember { mutableStateOf("") }
     val items = remember { mutableStateListOf<InvoiceItemDraft>() }
     val saving by viewModel.saving.collectAsState()
+    val savedInvoiceId by viewModel.savedInvoiceId.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    LaunchedEffect(savedInvoiceId) {
+        if (savedInvoiceId != null) {
+            viewModel.clearSavedState()
+            onSaved()
+        }
+    }
 
     val currentTotal = items.sumOf { it.total } +
         (quantity.toDoubleOrNull() ?: 0.0) * (price.toDoubleOrNull() ?: 0.0)
@@ -104,15 +114,22 @@ fun CreateInvoiceScreen(
 
         HorizontalDivider()
 
-        LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             itemsIndexed(items) { index, item ->
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(item.description, style = MaterialTheme.typography.titleMedium)
                             Text("${item.quantity} × ${item.unitPrice}")
                         }
-                        Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                        Column(horizontalAlignment = Alignment.End) {
                             Text("${item.total}")
                             Button(onClick = { items.removeAt(index) }) { Text("حذف") }
                         }
@@ -127,7 +144,12 @@ fun CreateInvoiceScreen(
         Button(
             enabled = !saving && customerName.isNotBlank() && items.isNotEmpty(),
             onClick = {
-                viewModel.save(InvoiceDraft(customerName = customerName, items = items.toList()))
+                viewModel.save(
+                    InvoiceDraft(
+                        customerName = customerName.trim(),
+                        items = items.toList()
+                    )
+                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -135,10 +157,5 @@ fun CreateInvoiceScreen(
         }
 
         Spacer(Modifier.height(4.dp))
-    }
-
-    if (viewModel.savedInvoiceId.collectAsState().value != null) {
-        viewModel.clearSavedState()
-        onSaved()
     }
 }
