@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import com.yhyyzray388.invoiceapp.ui.invoice.CreateInvoiceScreen
+import com.yhyyzray388.invoiceapp.ui.invoice.EditInvoiceScreen
 import com.yhyyzray388.invoiceapp.ui.invoice.InvoiceViewModel
 import com.yhyyzray388.invoiceapp.ui.invoices.InvoiceListScreen
 import com.yhyyzray388.invoiceapp.ui.invoices.InvoiceListViewModel
@@ -26,22 +27,37 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             InvoiceAppTheme {
-                var showCreate = androidx.compose.runtime.remember {
-                    androidx.compose.runtime.mutableStateOf(false)
+                var screen by androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf(Screen.List)
+                }
+                var selectedInvoiceId by androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf<Long?>(null)
                 }
 
-                if (showCreate.value) {
-                    CreateInvoiceScreen(
-                        viewModel = invoiceViewModel,
-                        onSaved = { showCreate.value = false }
-                    )
-                } else {
-                    InvoiceListScreen(
+                when (screen) {
+                    Screen.List -> InvoiceListScreen(
                         viewModel = listViewModel,
-                        onCreateInvoice = { showCreate.value = true }
+                        onCreateInvoice = { screen = Screen.Create },
+                        onInvoiceClick = { id ->
+                            selectedInvoiceId = id
+                            screen = Screen.Edit
+                        }
                     )
+                    Screen.Create -> CreateInvoiceScreen(
+                        viewModel = invoiceViewModel,
+                        onSaved = { screen = Screen.List }
+                    )
+                    Screen.Edit -> selectedInvoiceId?.let { id ->
+                        EditInvoiceScreen(
+                            invoiceId = id,
+                            repository = app.appContainer.invoiceRepository,
+                            onSaved = { screen = Screen.List }
+                        )
+                    } ?: run { screen = Screen.List }
                 }
             }
         }
     }
+
+    private enum class Screen { List, Create, Edit }
 }
