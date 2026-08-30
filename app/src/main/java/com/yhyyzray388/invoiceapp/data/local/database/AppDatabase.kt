@@ -11,7 +11,7 @@ import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceItemEntity
 
 @Database(
     entities = [InvoiceEntity::class, InvoiceItemEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +33,15 @@ abstract class AppDatabase : RoomDatabase() {
                     )"""
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_invoice_items_invoiceId ON invoice_items(invoiceId)")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE invoices ADD COLUMN taxRate REAL NOT NULL DEFAULT 0.0")
+                db.execSQL(
+                    "UPDATE invoices SET taxRate = CASE WHEN subtotal > 0 THEN (tax * 100.0 / subtotal) ELSE 0.0 END"
+                )
             }
         }
     }
