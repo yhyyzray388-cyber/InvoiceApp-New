@@ -30,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.yhyyzray388.invoiceapp.domain.model.InvoiceCalculator
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceDraft
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceItemDraft
+import com.yhyyzray388.invoiceapp.domain.util.formatAmount
 
 @Composable
 fun CreateInvoiceScreen(
@@ -42,6 +44,8 @@ fun CreateInvoiceScreen(
     var description by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("1") }
     var price by remember { mutableStateOf("") }
+    var taxRateInput by remember { mutableStateOf("0") }
+    var notes by remember { mutableStateOf("") }
     val items = remember { mutableStateListOf<InvoiceItemDraft>() }
     val saving by viewModel.saving.collectAsState()
     val savedInvoiceId by viewModel.savedInvoiceId.collectAsState()
@@ -54,8 +58,10 @@ fun CreateInvoiceScreen(
         }
     }
 
-    val currentTotal = items.sumOf { it.total } +
-        (quantity.toDoubleOrNull() ?: 0.0) * (price.toDoubleOrNull() ?: 0.0)
+    val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+    val subtotal = items.sumOf { it.total }
+    val tax = InvoiceCalculator.tax(subtotal, taxRate)
+    val currentTotal = subtotal + tax
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -82,15 +88,17 @@ fun CreateInvoiceScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = quantity,
-                onValueChange = { quantity = it },
+                onValueChange = { value -> quantity = value.filter(Char::isDigit) },
                 label = { Text("الكمية") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             OutlinedTextField(
                 value = price,
-                onValueChange = { price = it },
+                onValueChange = { value ->
+                    price = value.filter { it.isDigit() || it == '.' || it == ',' }
+                },
                 label = { Text("السعر") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
@@ -100,8 +108,8 @@ fun CreateInvoiceScreen(
 
         Button(
             onClick = {
-                val q = quantity.toDoubleOrNull()
-                val p = price.toDoubleOrNull()
+                val q = quantity.toIntOrNull()?.toDouble()
+                val p = price.replace(",", "").toDoubleOrNull()
                 if (description.isNotBlank() && q != null && q > 0 && p != null && p >= 0) {
                     items.add(InvoiceItemDraft(description.trim(), q, p))
                     description = ""
@@ -111,6 +119,17 @@ fun CreateInvoiceScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) { Text("إضافة بند") }
+
+        OutlinedTextField(
+            value = taxRateInput,
+            onValueChange = { value ->
+                taxRateInput = value.filter { it.isDigit() || it == '.' || it == ',' }
+            },
+            label = { Text("نسبة الضريبة %") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
 
         HorizontalDivider()
 
@@ -127,10 +146,10 @@ fun CreateInvoiceScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(item.description, style = MaterialTheme.typography.titleMedium)
-                            Text("${item.quantity} × ${item.unitPrice}")
+                            Text("${item.quantity.toInt()} × ${formatAmount(item.unitPrice)}")
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("${item.total}")
+                            Text(formatAmount(item.total))
                             Button(onClick = { items.removeAt(index) }) { Text("حذف") }
                         }
                     }
@@ -138,7 +157,16 @@ fun CreateInvoiceScreen(
             }
         }
 
-        Text("الإجمالي: $currentTotal", style = MaterialTheme.typography.titleLarge)
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("ملاحظات") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Text("المجموع الفرعي: ${formatAmount(subtotal)}")
+        Text("الضريبة: ${formatAmount(tax)}")
+        Text("الإجمالي: ${formatAmount(currentTotal)}", style = MaterialTheme.typography.titleLarge)
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
@@ -147,7 +175,9 @@ fun CreateInvoiceScreen(
                 viewModel.save(
                     InvoiceDraft(
                         customerName = customerName.trim(),
-                        items = items.toList()
+                        items = items.toList(),
+                        taxRate = taxRate,
+                        notes = notes.trim()
                     )
                 )
             },
