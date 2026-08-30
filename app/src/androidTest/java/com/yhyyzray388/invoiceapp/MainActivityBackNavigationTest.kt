@@ -17,6 +17,7 @@ import org.junit.runner.RunWith
 class MainActivityBackNavigationTest {
 
     @get:Rule
+    @JvmField
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     private val repository
