@@ -13,7 +13,10 @@ class AppContainer(context: Context) {
             AppDatabase::class.java,
             "invoice_app.db"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3
+            )
             .build()
 
     val invoiceRepository = InvoiceRepository(database)
