@@ -12,6 +12,7 @@ data class InvoiceEntity(
     val customerName: String,
     val issueDate: Long,
     val subtotal: Double,
+    val taxRate: Double = 0.0,
     val tax: Double,
     val total: Double,
     val notes: String = ""
