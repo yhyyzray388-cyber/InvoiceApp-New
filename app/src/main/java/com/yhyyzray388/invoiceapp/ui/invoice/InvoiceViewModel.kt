@@ -36,6 +36,7 @@ class InvoiceViewModel(
                     customerName = draft.customerName.trim(),
                     issueDate = draft.issueDate,
                     subtotal = draft.subtotal,
+                    taxRate = draft.taxRate,
                     tax = draft.tax,
                     total = draft.total,
                     notes = draft.notes.trim()
