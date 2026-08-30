@@ -1,5 +1,6 @@
 package com.yhyyzray388.invoiceapp
 
+import androidx.activity.OnBackPressedDispatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -33,9 +34,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("+").performClick()
         composeTestRule.onNodeWithText("فاتورة جديدة").assertIsDisplayed()
 
-        composeTestRule.runOnUiThread {
-            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
-        }
+        pressBack()
 
         composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
     }
@@ -61,12 +60,16 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
 
-        composeTestRule.runOnUiThread {
-            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
-        }
+        pressBack()
 
         composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
+    }
+
+    private fun pressBack() {
+        composeTestRule.runOnUiThread {
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+        }
     }
 }
