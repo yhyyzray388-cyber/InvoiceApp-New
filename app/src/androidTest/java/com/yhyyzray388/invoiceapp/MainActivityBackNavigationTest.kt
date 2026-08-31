@@ -34,7 +34,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("+").performClick()
         composeTestRule.onNodeWithText("فاتورة جديدة").assertIsDisplayed()
 
-        composeTestRule.runOnUiThread {
+        composeTestRule.activity.runOnUiThread {
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
         }
 
@@ -62,7 +62,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
 
-        composeTestRule.runOnUiThread {
+        composeTestRule.activity.runOnUiThread {
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
         }
 
