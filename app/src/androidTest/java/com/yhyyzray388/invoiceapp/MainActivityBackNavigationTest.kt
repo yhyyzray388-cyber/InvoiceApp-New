@@ -93,7 +93,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("حذف").performClick()
         composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
         composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
-        composeTestRule.onNodeWithText("حذف", useUnmergedTree = true).performClick()
+        composeTestRule.onAllNodesWithText("حذف").onLast().performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
