@@ -1,5 +1,6 @@
 package com.yhyyzray388.invoiceapp
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -69,5 +70,36 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
+    }
+
+    @Test
+    fun deleteInvoiceRemovesItFromListAndRoom() = runBlocking {
+        val invoiceId = repository.insert(
+            InvoiceEntity(
+                invoiceNumber = "TEST-DELETE-001",
+                customerName = "عميل الحذف",
+                issueDate = 1_700_000_000_000,
+                subtotal = 2500.0,
+                taxRate = 0.0,
+                tax = 0.0,
+                total = 2500.0
+            )
+        )
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("حذف").performClick()
+        composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
+        composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
+        composeTestRule.onNodeWithText("حذف", useUnmergedTree = true).performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
+        }
+
+        assert(repository.getInvoiceById(invoiceId) == null)
+        composeTestRule.onNodeWithText("لا توجد فواتير بعد").assertIsDisplayed()
     }
 }
