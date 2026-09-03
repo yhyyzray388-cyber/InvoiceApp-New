@@ -8,9 +8,10 @@ import com.yhyyzray388.invoiceapp.data.repository.InvoiceRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class InvoiceListViewModel(
-    repository: InvoiceRepository
+    private val repository: InvoiceRepository
 ) : ViewModel() {
 
     val invoices: StateFlow<List<InvoiceEntity>> =
@@ -19,6 +20,12 @@ class InvoiceListViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    fun deleteInvoice(invoice: InvoiceEntity) {
+        viewModelScope.launch {
+            repository.delete(invoice)
+        }
+    }
 
     class Factory(
         private val repository: InvoiceRepository
