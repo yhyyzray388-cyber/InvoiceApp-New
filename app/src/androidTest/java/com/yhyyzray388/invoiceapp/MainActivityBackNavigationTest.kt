@@ -82,7 +82,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("حذف").performClick()
         composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
         composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
-        composeTestRule.onAllNodesWithText("حذف").onLast().performClick()
+        composeTestRule.onAllNodesWithText("حذف")[1].performClick()
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
         }
