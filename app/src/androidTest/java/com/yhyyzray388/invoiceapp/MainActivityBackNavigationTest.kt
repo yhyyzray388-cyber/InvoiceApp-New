@@ -1,6 +1,5 @@
 package com.yhyyzray388.invoiceapp
 
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -16,7 +15,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityBackNavigationTest {
-
     @get:Rule
     @JvmField
     val composeTestRule = createAndroidComposeRule<MainActivity>()
@@ -26,19 +24,15 @@ class MainActivityBackNavigationTest {
             .appContainer.invoiceRepository
 
     @Before
-    fun clearInvoices() = runBlocking {
-        repository.deleteAllInvoices()
-    }
+    fun clearInvoices() = runBlocking { repository.deleteAllInvoices() }
 
     @Test
     fun backFromCreateReturnsToInvoiceList() {
         composeTestRule.onNodeWithText("+").performClick()
         composeTestRule.onNodeWithText("فاتورة جديدة").assertIsDisplayed()
-
         composeTestRule.activity.runOnUiThread {
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
         }
-
         composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
     }
 
@@ -55,18 +49,14 @@ class MainActivityBackNavigationTest {
                 total = 1000.0
             )
         )
-
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("TEST-BACK-001").fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
-
         composeTestRule.activity.runOnUiThread {
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
         }
-
         composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
         composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
         composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
@@ -85,20 +75,17 @@ class MainActivityBackNavigationTest {
                 total = 2500.0
             )
         )
-
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isNotEmpty()
         }
-
+        composeTestRule.onNodeWithText("TEST-DELETE-001").performClick()
         composeTestRule.onNodeWithText("حذف").performClick()
         composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
         composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("حذف").onLast().performClick()
-
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
         }
-
         assert(repository.getInvoiceById(invoiceId) == null)
         composeTestRule.onNodeWithText("لا توجد فواتير بعد").assertIsDisplayed()
     }
