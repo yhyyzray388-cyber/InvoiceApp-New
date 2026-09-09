@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceEntity
-import java.text.NumberFormat
+import com.yhyyzray388.invoiceapp.domain.util.formatAmount
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -106,8 +106,7 @@ private fun InvoiceCard(
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val currency = NumberFormat.getCurrencyInstance(Locale.getDefault())
-    val date = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(Date(invoice.issueDate))
+    val date = SimpleDateFormat("yyyy/MM/dd", Locale.US).format(Date(invoice.issueDate))
 
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -115,7 +114,7 @@ private fun InvoiceCard(
             Text(invoice.customerName, modifier = Modifier.padding(top = 4.dp))
             Text("التاريخ: $date", modifier = Modifier.padding(top = 8.dp))
             Text(
-                "الإجمالي: ${currency.format(invoice.total)}",
+                "الإجمالي: ${formatAmount(invoice.total)} ربي",
                 modifier = Modifier.padding(top = 4.dp),
                 style = MaterialTheme.typography.titleMedium
             )
