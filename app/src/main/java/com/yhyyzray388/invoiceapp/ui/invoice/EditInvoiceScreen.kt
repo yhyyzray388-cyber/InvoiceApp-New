@@ -149,13 +149,12 @@ fun EditInvoiceScreen(
                             onValueChange = { value ->
                                 val digitsOnly = value.filter(Char::isDigit)
                                 quantityInputs = quantityInputs + (quantityKey to digitsOnly)
-                                digitsOnly.toIntOrNull()?.takeIf { it >= 0 }?.let { quantity ->
-                                    draftItems = draftItems.toMutableList().also {
-                                        it[index] = item.copy(
-                                            quantity = quantity.toDouble(),
-                                            total = quantity * item.unitPrice
-                                        )
-                                    }
+                                val quantity = digitsOnly.toIntOrNull()
+                                draftItems = draftItems.toMutableList().also {
+                                    it[index] = item.copy(
+                                        quantity = quantity?.toDouble() ?: 0.0,
+                                        total = (quantity ?: 0) * item.unitPrice
+                                    )
                                 }
                             },
                             label = { Text("الكمية") },
