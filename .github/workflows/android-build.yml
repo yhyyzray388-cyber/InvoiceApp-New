@@ -36,7 +36,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Isolate Back Navigation instrumentation test
+      - name: Diagnose Back Navigation instrumentation test
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
@@ -47,10 +47,14 @@ jobs:
           disable-animations: true
           script: |
             set +e
-            gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace
+            gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info
             test_status=$?
-            echo '--- DEVICE LOGCAT (ERRORS) ---'
-            adb logcat -d -v threadtime '*:E' | tail -n 300
+            echo '--- INSTALLED INSTRUMENTATIONS ---'
+            adb shell pm list instrumentation
+            echo '--- DIRECT INSTRUMENTATION RUN ---'
+            adb shell am instrument -w -r -e class com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest com.yhyyzray388.invoiceapp.test/androidx.test.runner.AndroidJUnitRunner
+            echo '--- DEVICE LOGCAT (TEST/JUNIT ERRORS) ---'
+            adb logcat -d -v threadtime | grep -E 'AndroidJUnitRunner|AndroidJUnit4ClassRunner|MainActivityBackNavigationTest|JUnit|FATAL EXCEPTION|Caused by|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|InvalidTestClassError' | tail -n 500
             echo '--- TEST REPORT FILES ---'
             find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort | tail -n 50
             exit $test_status
