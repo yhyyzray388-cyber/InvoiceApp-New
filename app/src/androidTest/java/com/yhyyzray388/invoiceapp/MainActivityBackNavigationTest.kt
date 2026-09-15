@@ -23,7 +23,11 @@ class MainActivityBackNavigationTest {
             .appContainer.invoiceRepository
 
     @Before
-    fun clearInvoices() = runBlocking { repository.deleteAllInvoices() }
+    fun clearInvoices() {
+        runBlocking {
+            repository.deleteAllInvoices()
+        }
+    }
 
     @Test
     fun backFromCreateReturnsToInvoiceList() {
