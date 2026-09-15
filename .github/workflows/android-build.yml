@@ -36,7 +36,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run isolated Compose instrumentation smoke tests
+      - name: Run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
@@ -45,4 +45,4 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.ComposeRuleSmokeTest
+          script: gradle --no-daemon connectedDebugAndroidTest
