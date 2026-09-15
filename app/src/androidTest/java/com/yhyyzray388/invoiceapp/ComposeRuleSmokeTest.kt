@@ -9,7 +9,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ComposeRuleSmokeTest {
     @get:Rule
-    @JvmField
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
