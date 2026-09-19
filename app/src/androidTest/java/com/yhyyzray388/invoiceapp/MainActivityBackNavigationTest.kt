@@ -40,56 +40,60 @@ class MainActivityBackNavigationTest {
     }
 
     @Test
-    fun backFromEditReturnsToInvoiceListAndCanReopenSameInvoice() {\n        runBlocking {
-        repository.insert(
-            InvoiceEntity(
-                invoiceNumber = "TEST-BACK-001",
-                customerName = "عميل الاختبار",
-                issueDate = 1_700_000_000_000,
-                subtotal = 1000.0,
-                taxRate = 0.0,
-                tax = 0.0,
-                total = 1000.0
+    fun backFromEditReturnsToInvoiceListAndCanReopenSameInvoice() {
+        runBlocking {
+            repository.insert(
+                InvoiceEntity(
+                    invoiceNumber = "TEST-BACK-001",
+                    customerName = "عميل الاختبار",
+                    issueDate = 1_700_000_000_000,
+                    subtotal = 1000.0,
+                    taxRate = 0.0,
+                    tax = 0.0,
+                    total = 1000.0
+                )
             )
-        )
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodesWithText("TEST-BACK-001").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.waitUntil(timeoutMillis = 5_000) {
+                composeTestRule.onAllNodesWithText("TEST-BACK-001").fetchSemanticsNodes().isNotEmpty()
+            }
+            composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
+            composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
+            composeTestRule.activity.runOnUiThread {
+                composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            }
+            composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
+            composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
+            composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
         }
-        composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
-        composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
-        composeTestRule.activity.runOnUiThread {
-            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
-        }
-        composeTestRule.onNodeWithText("الفواتير").assertIsDisplayed()
-        composeTestRule.onNodeWithText("TEST-BACK-001").performClick()
-        composeTestRule.onNodeWithText("تعديل الفاتورة").assertIsDisplayed()
     }
 
     @Test
-    fun deleteInvoiceRemovesItFromListAndRoom() = runBlocking {
-        val invoiceId = repository.insert(
-            InvoiceEntity(
-                invoiceNumber = "TEST-DELETE-001",
-                customerName = "عميل الحذف",
-                issueDate = 1_700_000_000_000,
-                subtotal = 2500.0,
-                taxRate = 0.0,
-                tax = 0.0,
-                total = 2500.0
+    fun deleteInvoiceRemovesItFromListAndRoom() {
+        runBlocking {
+            val invoiceId = repository.insert(
+                InvoiceEntity(
+                    invoiceNumber = "TEST-DELETE-001",
+                    customerName = "عميل الحذف",
+                    issueDate = 1_700_000_000_000,
+                    subtotal = 2500.0,
+                    taxRate = 0.0,
+                    tax = 0.0,
+                    total = 2500.0
+                )
             )
-        )
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.waitUntil(timeoutMillis = 5_000) {
+                composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isNotEmpty()
+            }
+            composeTestRule.onNodeWithText("TEST-DELETE-001").performClick()
+            composeTestRule.onNodeWithText("حذف").performClick()
+            composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
+            composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
+            composeTestRule.onAllNodesWithText("حذف")[1].performClick()
+            composeTestRule.waitUntil(timeoutMillis = 5_000) {
+                composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
+            }
+            assert(repository.getInvoiceById(invoiceId) == null)
+            composeTestRule.onNodeWithText("لا توجد فواتير بعد").assertIsDisplayed()
         }
-        composeTestRule.onNodeWithText("TEST-DELETE-001").performClick()
-        composeTestRule.onNodeWithText("حذف").performClick()
-        composeTestRule.onNodeWithText("حذف الفاتورة").assertIsDisplayed()
-        composeTestRule.onNodeWithText("إلغاء").assertIsDisplayed()
-        composeTestRule.onAllNodesWithText("حذف")[1].performClick()
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onAllNodesWithText("TEST-DELETE-001").fetchSemanticsNodes().isEmpty()
-        }
-        assert(repository.getInvoiceById(invoiceId) == null)
-        composeTestRule.onNodeWithText("لا توجد فواتير بعد").assertIsDisplayed()
     }
 }
