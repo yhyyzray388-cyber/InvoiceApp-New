@@ -40,7 +40,7 @@ class MainActivityBackNavigationTest {
     }
 
     @Test
-    fun backFromEditReturnsToInvoiceListAndCanReopenSameInvoice() = runBlocking {
+    fun backFromEditReturnsToInvoiceListAndCanReopenSameInvoice() {\n        runBlocking {
         repository.insert(
             InvoiceEntity(
                 invoiceNumber = "TEST-BACK-001",
