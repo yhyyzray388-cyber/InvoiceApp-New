@@ -56,5 +56,10 @@ jobs:
             echo '--- DEVICE LOGCAT (TEST/JUNIT ERRORS) ---'
             adb logcat -d -v threadtime | grep -E 'AndroidJUnitRunner|AndroidJUnit4ClassRunner|MainActivityBackNavigationTest|JUnit|FATAL EXCEPTION|Caused by|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|InvalidTestClassError' | tail -n 500
             echo '--- TEST REPORT FILES ---'
-            find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort | tail -n 50
+            find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
+            echo '--- TEST XML CONTENT ---'
+            for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
+              echo "===== $f ====="
+              cat "$f"
+            done
             exit $test_status
