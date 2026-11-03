@@ -36,7 +36,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Diagnose Back Navigation instrumentation test
+      - name: Run Back Navigation instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
@@ -46,20 +46,26 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            set +e
-            gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info
-            test_status=$?
-            echo '--- INSTALLED INSTRUMENTATIONS ---'
-            adb shell pm list instrumentation
-            echo '--- DIRECT INSTRUMENTATION RUN ---'
-            adb shell am instrument -w -r -e class com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest com.yhyyzray388.invoiceapp.test/androidx.test.runner.AndroidJUnitRunner
-            echo '--- DEVICE LOGCAT (TEST/JUNIT ERRORS) ---'
-            adb logcat -d -v threadtime | grep -E 'AndroidJUnitRunner|AndroidJUnit4ClassRunner|MainActivityBackNavigationTest|JUnit|FATAL EXCEPTION|Caused by|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|InvalidTestClassError' | tail -n 500
-            echo '--- TEST REPORT FILES ---'
-            find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
-            echo '--- TEST XML CONTENT ---'
-            for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
-              echo "===== $f ====="
-              cat "$f"
-            done
-            exit $test_status
+            if gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info; then
+              echo '--- TEST REPORT FILES ---'
+              find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
+              echo '--- TEST XML SUMMARY ---'
+              for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
+                echo "===== $f ====="
+                grep -E '<testsuite|<testcase|<failure|<error' "$f" || true
+              done
+            else
+              test_status=$?
+              echo '--- INSTALLED INSTRUMENTATIONS (FAILURE DIAGNOSTICS) ---'
+              adb shell pm list instrumentation || true
+              echo '--- DEVICE LOGCAT (TEST/JUNIT ERRORS) ---'
+              adb logcat -d -v threadtime | grep -E 'AndroidJUnitRunner|AndroidJUnit4ClassRunner|MainActivityBackNavigationTest|JUnit|FATAL EXCEPTION|Caused by|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|InvalidTestClassError' | tail -n 500 || true
+              echo '--- TEST REPORT FILES ---'
+              find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
+              echo '--- TEST XML CONTENT ---'
+              for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
+                echo "===== $f ====="
+                cat "$f"
+              done
+              exit "$test_status"
+            fi
