@@ -59,9 +59,9 @@ fun CreateInvoiceScreen(
     }
 
     val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
-    val subtotal = items.sumOf { it.total }
+    val subtotal = InvoiceCalculator.subtotal(items)
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
-    val currentTotal = subtotal + tax
+    val currentTotal = InvoiceCalculator.total(items, taxRate)
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
