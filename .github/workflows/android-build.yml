@@ -45,27 +45,15 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: |
-            if gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info; then
-              echo '--- TEST REPORT FILES ---'
-              find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
-              echo '--- TEST XML SUMMARY ---'
-              for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
-                echo "===== $f ====="
-                grep -E '<testsuite|<testcase|<failure|<error' "$f" || true
-              done
-            else
-              test_status=$?
-              echo '--- INSTALLED INSTRUMENTATIONS (FAILURE DIAGNOSTICS) ---'
-              adb shell pm list instrumentation || true
-              echo '--- DEVICE LOGCAT (TEST/JUNIT ERRORS) ---'
-              adb logcat -d -v threadtime | grep -E 'AndroidJUnitRunner|AndroidJUnit4ClassRunner|MainActivityBackNavigationTest|JUnit|FATAL EXCEPTION|Caused by|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|InvalidTestClassError' | tail -n 500 || true
-              echo '--- TEST REPORT FILES ---'
-              find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort
-              echo '--- TEST XML CONTENT ---'
-              for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
-                echo "===== $f ====="
-                cat "$f"
-              done
-              exit "$test_status"
-            fi
+          script: gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info
+
+      - name: Collect instrumentation test reports
+        if: always()
+        run: |
+          echo '--- TEST REPORT FILES ---'
+          find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort || true
+          echo '--- TEST XML SUMMARY ---'
+          for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
+            echo "===== $f ====="
+            grep -E '<testsuite|<testcase|<failure|<error' "$f" || true
+          done
