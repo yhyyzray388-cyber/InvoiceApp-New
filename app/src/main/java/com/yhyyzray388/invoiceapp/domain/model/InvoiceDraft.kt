@@ -16,7 +16,7 @@ data class InvoiceDraft(
     val taxRate: Double = 0.0,
     val notes: String = ""
 ) {
-    val subtotal: Double get() = items.sumOf { it.total }
-    val tax: Double get() = subtotal * (taxRate / 100.0)
-    val total: Double get() = subtotal + tax
+    val subtotal: Double get() = InvoiceCalculator.subtotal(items)
+    val tax: Double get() = InvoiceCalculator.tax(subtotal, taxRate)
+    val total: Double get() = InvoiceCalculator.total(items, taxRate)
 }
