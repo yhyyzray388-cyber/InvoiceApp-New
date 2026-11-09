@@ -1,16 +1,18 @@
 package com.yhyyzray388.invoiceapp.domain.util
 
+import com.yhyyzray388.invoiceapp.domain.model.InvoiceCalculator
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceItemDraft
 
+/**
+ * Compatibility facade. All invoice arithmetic is owned by InvoiceCalculator.
+ */
 object InvoiceTotalCalculator {
     fun subtotal(items: List<InvoiceItemDraft>): Double =
-        items.sumOf { it.quantity * it.unitPrice }
+        InvoiceCalculator.subtotal(items)
 
     fun tax(subtotal: Double, taxRate: Double): Double =
-        subtotal * (taxRate / 100.0)
+        InvoiceCalculator.tax(subtotal, taxRate)
 
-    fun total(items: List<InvoiceItemDraft>, taxRate: Double): Double {
-        val subtotal = subtotal(items)
-        return subtotal + tax(subtotal, taxRate)
-    }
+    fun total(items: List<InvoiceItemDraft>, taxRate: Double): Double =
+        InvoiceCalculator.total(items, taxRate)
 }
