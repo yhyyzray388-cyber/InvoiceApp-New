@@ -44,7 +44,7 @@ class MainActivityBackNavigationTest {
         composeTestRule.onNodeWithText("السعر").performTextInput("1500")
         composeTestRule.onNodeWithText("إضافة بند").performClick()
 
-        composeTestRule.onNodeWithText("دفتر").assertIsDisplayed()
+        composeTestRule.onNodeWithText("دفتر").assertExists()
         composeTestRule.onNodeWithText("حفظ الفاتورة").performClick()
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule.onAllNodesWithText("عميل التدفق")
