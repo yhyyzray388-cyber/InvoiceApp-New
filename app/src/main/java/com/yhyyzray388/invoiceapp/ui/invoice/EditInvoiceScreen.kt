@@ -1,5 +1,12 @@
 package com.yhyyzray388.invoiceapp.ui.invoice
 
+private fun InvoiceItemEntity.toDraft() = InvoiceItemDraft(
+    description = description,
+    quantity = quantity,
+    unitPrice = unitPrice
+)
+
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceEntity
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceItemEntity
 import com.yhyyzray388.invoiceapp.data.repository.InvoiceRepository
+import com.yhyyzray388.invoiceapp.domain.model.InvoiceItemDraft
 import com.yhyyzray388.invoiceapp.domain.model.InvoiceCalculator
 import com.yhyyzray388.invoiceapp.domain.util.formatAmount
 import kotlinx.coroutines.flow.first
@@ -84,10 +92,10 @@ fun EditInvoiceScreen(
         return
     }
 
-    val subtotal = draftItems.sumOf { it.quantity * it.unitPrice }
+    val subtotal = InvoiceCalculator.subtotal(draftItems.map { it.toDraft() })
     val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
-    val total = subtotal + tax
+    val total = InvoiceCalculator.total(draftItems.map { it.toDraft() }, taxRate)
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
