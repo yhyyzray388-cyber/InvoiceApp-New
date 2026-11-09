@@ -49,11 +49,12 @@ jobs:
 
       - name: Collect instrumentation test reports
         if: always()
+        shell: bash
         run: |
           echo '--- TEST REPORT FILES ---'
           find app/build/outputs/androidTest-results app/build/reports/androidTests -type f 2>/dev/null | sort || true
           echo '--- TEST XML SUMMARY ---'
-          for f in $(find app/build/outputs/androidTest-results -type f -name '*.xml' 2>/dev/null); do
+          while IFS= read -r -d '' f; do
             echo "===== $f ====="
             grep -E '<testsuite|<testcase|<failure|<error' "$f" || true
-          done
+          done < <(find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null)
