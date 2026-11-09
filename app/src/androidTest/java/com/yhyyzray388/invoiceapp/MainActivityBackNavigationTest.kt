@@ -5,8 +5,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceEntity
+import kotlinx.coroutines.flow.first
+import org.junit.Assert.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -27,6 +31,57 @@ class MainActivityBackNavigationTest {
         runBlocking {
             repository.deleteAllInvoices()
         }
+    }
+
+
+    @Test
+    fun createInvoicePersistsLineItemAndEditUpdatesIt() {
+        composeTestRule.onNodeWithText("+").performClick()
+        composeTestRule.onNodeWithText("اسم العميل").performTextInput("عميل التدفق")
+        composeTestRule.onNodeWithText("وصف المنتج").performTextInput("دفتر")
+        composeTestRule.onNodeWithText("الكمية").performTextClearance()
+        composeTestRule.onNodeWithText("الكمية").performTextInput("2")
+        composeTestRule.onNodeWithText("السعر").performTextInput("1500")
+        composeTestRule.onNodeWithText("إضافة بند").performClick()
+
+        composeTestRule.onNodeWithText("دفتر").assertIsDisplayed()
+        composeTestRule.onNodeWithText("حفظ الفاتورة").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("عميل التدفق")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val invoice = runBlocking { repository.allInvoices.first().single() }
+        val savedItems = runBlocking { repository.observeItems(invoice.id).first() }
+        assertEquals(1, savedItems.size)
+        assertEquals("دفتر", savedItems.single().description)
+        assertEquals(2.0, savedItems.single().quantity, 0.000001)
+        assertEquals(1500.0, savedItems.single().unitPrice, 0.000001)
+
+        composeTestRule.onNodeWithText("عميل التدفق").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("تعديل الفاتورة")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("وصف البند").performTextClearance()
+        composeTestRule.onNodeWithText("وصف البند").performTextInput("دفتر معدل")
+        composeTestRule.onNodeWithText("الكمية").performTextClearance()
+        composeTestRule.onNodeWithText("الكمية").performTextInput("3")
+        composeTestRule.onNodeWithText("سعر الوحدة").performTextClearance()
+        composeTestRule.onNodeWithText("سعر الوحدة").performTextInput("2000")
+        composeTestRule.onNodeWithText("حفظ التعديلات").performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("عميل التدفق")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        val updatedInvoice = runBlocking { repository.getInvoiceById(invoice.id)!! }
+        val updatedItems = runBlocking { repository.observeItems(invoice.id).first() }
+        assertEquals(6000.0, updatedInvoice.total, 0.000001)
+        assertEquals(1, updatedItems.size)
+        assertEquals("دفتر معدل", updatedItems.single().description)
+        assertEquals(3.0, updatedItems.single().quantity, 0.000001)
+        assertEquals(2000.0, updatedItems.single().unitPrice, 0.000001)
     }
 
     @Test
