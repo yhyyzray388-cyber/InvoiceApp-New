@@ -39,7 +39,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Back Navigation instrumentation tests
+      - name: Run instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
@@ -48,7 +48,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: gradle --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.yhyyzray388.invoiceapp.MainActivityBackNavigationTest --stacktrace --info
+          script: gradle --no-daemon connectedDebugAndroidTest --stacktrace --info
 
       - name: Collect instrumentation test reports
         if: always()
