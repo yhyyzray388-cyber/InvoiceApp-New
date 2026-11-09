@@ -1,11 +1,5 @@
 package com.yhyyzray388.invoiceapp.ui.invoice
 
-private fun InvoiceItemEntity.toDraft() = InvoiceItemDraft(
-    description = description,
-    quantity = quantity,
-    unitPrice = unitPrice
-)
-
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +34,13 @@ import com.yhyyzray388.invoiceapp.domain.model.InvoiceCalculator
 import com.yhyyzray388.invoiceapp.domain.util.formatAmount
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+private fun InvoiceItemEntity.toDraft() = InvoiceItemDraft(
+    description = description,
+    quantity = quantity,
+    unitPrice = unitPrice
+)
+
 
 @Composable
 fun EditInvoiceScreen(
