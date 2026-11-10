@@ -95,7 +95,9 @@ fun EditInvoiceScreen(
     }
 
     val subtotal = InvoiceCalculator.subtotal(draftItems.map { it.toDraft() })
-    val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+    val parsedTaxRate = taxRateInput.replace(",", ".").toDoubleOrNull()
+    val taxRateIsValid = taxRateInput.isBlank() || (parsedTaxRate != null && parsedTaxRate.isFinite() && parsedTaxRate >= 0.0)
+    val taxRate = parsedTaxRate?.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
     val total = InvoiceCalculator.total(draftItems.map { it.toDraft() }, taxRate)
     val pricesAreValid = draftItems.all { item ->
@@ -247,7 +249,7 @@ fun EditInvoiceScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
-            enabled = !saving && customerName.isNotBlank() && pricesAreValid &&
+            enabled = !saving && customerName.isNotBlank() && taxRateIsValid && pricesAreValid &&
                 draftItems.isNotEmpty() && draftItems.all {
                     it.description.isNotBlank() && it.quantity > 0 && it.quantity % 1.0 == 0.0 && it.unitPrice >= 0
                 },
