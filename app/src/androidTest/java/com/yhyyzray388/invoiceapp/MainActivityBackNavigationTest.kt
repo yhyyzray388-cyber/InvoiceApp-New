@@ -236,4 +236,49 @@ class MainActivityBackNavigationTest {
         assert(runBlocking { repository.getInvoiceById(invoiceId) } == null)
         composeTestRule.onNodeWithText("لا توجد فواتير بعد").assertIsDisplayed()
     }
+
+    @Test
+    fun invalidTaxRatePreventsEditingInvoice() {
+        val invoiceId = runBlocking {
+            repository.saveInvoiceWithItems(
+                InvoiceEntity(
+                    invoiceNumber = "TEST-INVALID-EDIT-TAX-001",
+                    customerName = "عميل تعديل الضريبة",
+                    issueDate = 1_700_000_000_000,
+                    subtotal = 2000.0,
+                    taxRate = 5.0,
+                    tax = 100.0,
+                    total = 2100.0
+                ),
+                listOf(
+                    InvoiceItemEntity(
+                        invoiceId = 0,
+                        description = "خدمة",
+                        quantity = 1.0,
+                        unitPrice = 2000.0,
+                        total = 2000.0
+                    )
+                )
+            )
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("TEST-INVALID-EDIT-TAX-001")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("TEST-INVALID-EDIT-TAX-001").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("تعديل الفاتورة")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("نسبة الضريبة %").performTextClearance()
+        composeTestRule.onNodeWithText("نسبة الضريبة %").performTextInput("1..2")
+        composeTestRule.onNodeWithText("حفظ التعديلات").assertIsNotEnabled()
+
+        val unchangedInvoice = runBlocking { repository.getInvoiceById(invoiceId)!! }
+        assertEquals(5.0, unchangedInvoice.taxRate, 0.000001)
+        assertEquals(2100.0, unchangedInvoice.total, 0.000001)
+    }
+
 }
