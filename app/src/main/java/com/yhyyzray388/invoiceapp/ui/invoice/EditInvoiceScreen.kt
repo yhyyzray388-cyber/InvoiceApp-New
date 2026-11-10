@@ -55,6 +55,7 @@ fun EditInvoiceScreen(
     var draftItems by remember { mutableStateOf<List<InvoiceItemEntity>>(emptyList()) }
     var quantityInputs by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var priceInputs by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    var nextTemporaryItemId by remember { mutableStateOf(-1L) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -97,8 +98,8 @@ fun EditInvoiceScreen(
     val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
     val total = InvoiceCalculator.total(draftItems.map { it.toDraft() }, taxRate)
-    val pricesAreValid = draftItems.withIndex().all { (index, item) ->
-        val key = if (item.id != 0L) item.id else index.toLong().unaryMinus()
+    val pricesAreValid = draftItems.all { item ->
+        val key = item.id
         val input = priceInputs[key] ?: formatAmount(item.unitPrice)
         input.isNotBlank() && input.replace(",", "").toDoubleOrNull()?.let { it >= 0.0 } == true
     }
@@ -137,7 +138,7 @@ fun EditInvoiceScreen(
         ) {
             itemsIndexed(
                 draftItems,
-                key = { index, item -> if (item.id != 0L) item.id else "new-$index" }
+                key = { _, item -> if (item.id != 0L) item.id else "new-${item.description}-${item.quantity}" }
             ) { index, item ->
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     OutlinedTextField(
@@ -155,7 +156,7 @@ fun EditInvoiceScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val quantityKey = if (item.id != 0L) item.id else index.toLong().unaryMinus()
+                        val quantityKey = item.id
                         val quantityText = quantityInputs[quantityKey]
                             ?: item.quantity.toInt().toString()
                         OutlinedTextField(
@@ -217,12 +218,14 @@ fun EditInvoiceScreen(
                 Button(
                     onClick = {
                         draftItems = draftItems + InvoiceItemEntity(
+                            id = nextTemporaryItemId,
                             invoiceId = invoiceId,
                             description = "",
                             quantity = 1.0,
                             unitPrice = 0.0,
                             total = 0.0
                         )
+                        nextTemporaryItemId -= 1L
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
