@@ -58,7 +58,9 @@ fun CreateInvoiceScreen(
         }
     }
 
-    val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+    val parsedTaxRate = taxRateInput.replace(",", ".").toDoubleOrNull()
+    val taxRateIsValid = taxRateInput.isBlank() || (parsedTaxRate != null && parsedTaxRate.isFinite() && parsedTaxRate >= 0.0)
+    val taxRate = parsedTaxRate?.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
     val subtotal = InvoiceCalculator.subtotal(items)
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
     val currentTotal = InvoiceCalculator.total(items, taxRate)
@@ -170,7 +172,7 @@ fun CreateInvoiceScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
-            enabled = !saving && customerName.isNotBlank() && items.isNotEmpty(),
+            enabled = !saving && customerName.isNotBlank() && taxRateIsValid && items.isNotEmpty(),
             onClick = {
                 viewModel.save(
                     InvoiceDraft(
