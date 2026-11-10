@@ -1,6 +1,7 @@
 package com.yhyyzray388.invoiceapp
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -9,6 +10,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceEntity
+import com.yhyyzray388.invoiceapp.data.local.entity.InvoiceItemEntity
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -82,6 +84,50 @@ class MainActivityBackNavigationTest {
         assertEquals("دفتر معدل", updatedItems.single().description)
         assertEquals(3.0, updatedItems.single().quantity, 0.000001)
         assertEquals(2000.0, updatedItems.single().unitPrice, 0.000001)
+    }
+
+    @Test
+    fun clearingEditedPriceDisablesSavingInsteadOfKeepingOldPrice() {
+        val invoiceId = runBlocking {
+            repository.saveInvoiceWithItems(
+                InvoiceEntity(
+                    invoiceNumber = "TEST-EMPTY-PRICE-001",
+                    customerName = "عميل السعر",
+                    issueDate = 1_700_000_000_000,
+                    subtotal = 3000.0,
+                    taxRate = 0.0,
+                    tax = 0.0,
+                    total = 3000.0
+                ),
+                listOf(
+                    InvoiceItemEntity(
+                        invoiceId = 0,
+                        description = "قلم",
+                        quantity = 2.0,
+                        unitPrice = 1500.0,
+                        total = 3000.0
+                    )
+                )
+            )
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("TEST-EMPTY-PRICE-001")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("TEST-EMPTY-PRICE-001").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("سعر الوحدة")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("سعر الوحدة").performTextClearance()
+        composeTestRule.onNodeWithText("حفظ التعديلات").assertIsNotEnabled()
+
+        val unchangedItem = runBlocking {
+            repository.observeItems(invoiceId).first().single()
+        }
+        assertEquals(1500.0, unchangedItem.unitPrice, 0.000001)
     }
 
     @Test
