@@ -97,8 +97,8 @@ fun EditInvoiceScreen(
     val taxRate = taxRateInput.replace(",", ".").toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
     val tax = InvoiceCalculator.tax(subtotal, taxRate)
     val total = InvoiceCalculator.total(draftItems.map { it.toDraft() }, taxRate)
-    val pricesAreValid = draftItems.all { item ->
-        val key = if (item.id != 0L) item.id else draftItems.indexOf(item).toLong().unaryMinus()
+    val pricesAreValid = draftItems.withIndex().all { (index, item) ->
+        val key = if (item.id != 0L) item.id else index.toLong().unaryMinus()
         val input = priceInputs[key] ?: formatAmount(item.unitPrice)
         input.isNotBlank() && input.replace(",", "").toDoubleOrNull()?.let { it >= 0.0 } == true
     }
