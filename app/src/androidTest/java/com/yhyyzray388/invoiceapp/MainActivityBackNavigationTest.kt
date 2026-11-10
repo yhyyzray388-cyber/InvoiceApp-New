@@ -131,6 +131,20 @@ class MainActivityBackNavigationTest {
     }
 
     @Test
+    fun invalidTaxRatePreventsCreatingInvoice() {
+        composeTestRule.onNodeWithText("+").performClick()
+        composeTestRule.onNodeWithText("اسم العميل").performTextInput("عميل الضريبة")
+        composeTestRule.onNodeWithText("وصف المنتج").performTextInput("قلم")
+        composeTestRule.onNodeWithText("السعر").performTextInput("1000")
+        composeTestRule.onNodeWithText("إضافة بند").performClick()
+        composeTestRule.onNodeWithText("نسبة الضريبة %").performTextClearance()
+        composeTestRule.onNodeWithText("نسبة الضريبة %").performTextInput("1..2")
+
+        composeTestRule.onNodeWithText("حفظ الفاتورة").assertIsNotEnabled()
+        assert(runBlocking { repository.allInvoices.first().isEmpty() })
+    }
+
+    @Test
     fun backFromCreateReturnsToInvoiceList() {
         composeTestRule.onNodeWithText("+").performClick()
         composeTestRule.onNodeWithText("فاتورة جديدة").assertIsDisplayed()
